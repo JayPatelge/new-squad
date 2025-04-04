@@ -32,7 +32,12 @@
             background-color: green;
             color: white;
             font-size: 16px;
+            margin: 20px auto; /* Center the button */
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: block; /* Center below categories */
             cursor: pointer;
+            border: none;
         }
         button#submit-button:hover {
             background-color: darkgreen;
@@ -145,7 +150,7 @@
                     .then(() => {
                         alertSound.pause(); // Stop sound
                         alertSound.currentTime = 0; // Reset sound
-                        alert(`Category "${selectedCategory}" submitted!`);
+                        console.log(`Category "${selectedCategory}" submitted!`); // Disable alert, log to console
                         submitButton.style.display = "none"; // Hide submit button
                     })
                     .catch((error) => {
