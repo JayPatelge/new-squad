@@ -7,12 +7,12 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 20px;
-            font-size: calc(1em + 0.5vw); /* Dynamic font size */
+            font-size: calc(1em + 0.5vw);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh; /* Full height */
+            height: 100vh;
         }
         img {
             max-width: 80%;
@@ -22,21 +22,26 @@
             border-radius: 10px;
         }
         p {
-            font-size: calc(1em + 0.4vw); /* Responsive text */
+            font-size: calc(1em + 0.4vw);
             margin: 10px 0;
         }
         button.category-button {
-            background-color: blue; /* Default color */
+            background-color: blue; /* Default button color */
             color: white;
             margin: 10px;
-            padding: 1em 2em; /* Scaled padding */
-            font-size: calc(1em + 0.3vw); /* Responsive button font size */
+            padding: 1em 2em;
+            font-size: calc(1em + 0.3vw);
             border-radius: 5px;
             border: none;
             cursor: pointer;
         }
         button.category-button.selected {
             background-color: brown; /* Highlight selected button */
+        }
+        div#categories {
+            max-height: 50vh; /* Limit height for scrollable area */
+            overflow-y: auto; /* Enable scrolling if content overflows */
+            width: 100%;
         }
     </style>
 </head>
@@ -80,13 +85,14 @@
                 document.getElementById("task-image").src = data.image_url || '';
                 document.getElementById("task-text").textContent = data.text || 'No text available.';
                 categoriesDiv.style.display = "block"; // Show categories
-                submitButton.style.display = "none"; // Reset submit button
+                submitButton.style.display = "none"; // Hide submit button initially
                 document.getElementById("refresh-button").style.display = "none"; // Hide refresh button
             } else {
                 document.getElementById("title").style.display = "none"; // Hide title
                 document.getElementById("task-image").src = ''; // Clear image
-                document.getElementById("task-text").textContent = 'Waiting for a new task...'; // Waiting message
-                categoriesDiv.style.display = "none"; // Hide categories
+                document.getElementById("task-text").textContent = 'Waiting for a new task...'; // Show waiting message
+                categoriesDiv.style.display = "none"; // Hide category buttons
+                submitButton.style.display = "none"; // Hide submit button
                 document.getElementById("refresh-button").style.display = "block"; // Show refresh button
             }
         });
@@ -97,15 +103,16 @@
             const button = document.createElement("button");
             button.textContent = category;
             button.classList.add("category-button");
+
             button.onclick = () => {
                 document.querySelectorAll(".category-button").forEach((btn) => {
                     btn.classList.remove("selected");
                 });
-
                 button.classList.add("selected");
                 selectedCategory = category;
                 submitButton.style.display = "block"; // Show submit button
             };
+
             categoriesDiv.appendChild(button);
         });
 
