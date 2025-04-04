@@ -26,7 +26,7 @@
             margin: 10px 0;
         }
         button.category-button {
-            background-color: blue; /* Default button color */
+            background-color: blue; /* Default color */
             color: white;
             margin: 10px;
             padding: 1em 2em;
@@ -39,8 +39,8 @@
             background-color: brown; /* Highlight selected button */
         }
         div#categories {
-            max-height: 50vh; /* Limit height for scrollable area */
-            overflow-y: auto; /* Enable scrolling if content overflows */
+            max-height: 50vh; /* Scrollable container */
+            overflow-y: auto; /* Scroll for overflow */
             width: 100%;
         }
     </style>
@@ -76,24 +76,23 @@
         const categoriesDiv = document.getElementById("categories");
         let selectedCategory = null;
 
-        // Listen for tasks
+        // Task listener
         db.ref("tasks/current").on("value", (snapshot) => {
             const data = snapshot.val();
-
             if (data) {
                 document.getElementById("title").style.display = "block";
                 document.getElementById("task-image").src = data.image_url || '';
                 document.getElementById("task-text").textContent = data.text || 'No text available.';
-                categoriesDiv.style.display = "block"; // Show categories
-                submitButton.style.display = "none"; // Hide submit button initially
-                document.getElementById("refresh-button").style.display = "none"; // Hide refresh button
+                categoriesDiv.style.display = "block";
+                submitButton.style.display = "none";
+                document.getElementById("refresh-button").style.display = "none";
             } else {
-                document.getElementById("title").style.display = "none"; // Hide title
-                document.getElementById("task-image").src = ''; // Clear image
-                document.getElementById("task-text").textContent = 'Waiting for a new task...'; // Show waiting message
-                categoriesDiv.style.display = "none"; // Hide category buttons
-                submitButton.style.display = "none"; // Hide submit button
-                document.getElementById("refresh-button").style.display = "block"; // Show refresh button
+                document.getElementById("title").style.display = "none";
+                document.getElementById("task-image").style.display = "none";
+                document.getElementById("task-text").textContent = 'Waiting for a new task...';
+                categoriesDiv.style.display = "none";
+                submitButton.style.display = "none";
+                document.getElementById("refresh-button").style.display = "block";
             }
         });
 
@@ -110,24 +109,24 @@
                 });
                 button.classList.add("selected");
                 selectedCategory = category;
-                submitButton.style.display = "block"; // Show submit button
+                submitButton.style.display = "block";
             };
 
             categoriesDiv.appendChild(button);
         });
 
-        // Refresh button functionality
+        // Refresh button logic
         document.getElementById("refresh-button").onclick = () => {
-            location.reload(); // Reload the page
+            location.reload();
         };
 
-        // Submit button functionality
+        // Submit button logic
         submitButton.onclick = () => {
             if (selectedCategory) {
                 db.ref("tasks/current/category").set(selectedCategory)
                     .then(() => {
                         alert(`Category "${selectedCategory}" submitted!`);
-                        submitButton.style.display = "none"; // Hide submit button after submission
+                        submitButton.style.display = "none";
                     })
                     .catch((error) => console.error("Error submitting category:", error));
             } else {
