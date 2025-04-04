@@ -40,11 +40,11 @@
     </style>
 </head>
 <body>
-    <h1>Select Option For Cards</h1>
-    <img id="task-image" src="" alt="Image not available">
-    <p id="task-text"></p>
+    <h1 id="title" style="display:none;">Select Option For Cards</h1>
+    <img id="task-image" src="" alt="" style="display:none;">
+    <p id="task-text" style="display:none;"></p>
     <audio id="alert-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" loop preload="auto"></audio>
-    <div id="categories"></div>
+    <div id="categories" style="display:none;"></div>
     <button id="submit-button" style="display:none;">Submit</button>
     
     <!-- Firebase Libraries -->
@@ -68,16 +68,21 @@
 
         const alertSound = document.getElementById("alert-sound");
         const submitButton = document.getElementById("submit-button");
+        const categoriesDiv = document.getElementById("categories");
 
         let selectedCategory = null;
 
         // Listen for new tasks
         db.ref("tasks/current").on("value", (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                document.getElementById("task-image").src = data.image_url || '';
-                document.getElementById("task-text").textContent = data.text || 'No text available.';
-                
+            if (data && data.image_url && data.text) {
+                document.getElementById("title").style.display = "block";
+                document.getElementById("task-image").style.display = "block";
+                document.getElementById("task-image").src = data.image_url;
+                document.getElementById("task-text").style.display = "block";
+                document.getElementById("task-text").textContent = data.text;
+                categoriesDiv.style.display = "block";
+
                 // Attempt to play sound programmatically
                 alertSound.play().catch((error) => {
                     console.warn("Sound playback failed, attempting workaround:", error);
@@ -97,8 +102,10 @@
                 submitButton.style.display = "none"; // Ensure submit button resets
                 selectedCategory = null; // Reset category selection
             } else {
-                document.getElementById("task-image").src = '';
-                document.getElementById("task-text").textContent = 'Waiting for new task...';
+                document.getElementById("title").style.display = "none";
+                document.getElementById("task-image").style.display = "none";
+                document.getElementById("task-text").style.display = "none";
+                categoriesDiv.style.display = "none";
                 alertSound.pause(); // Stop sound if no task is available
                 alertSound.currentTime = 0; // Reset sound playback position
             }
@@ -147,8 +154,9 @@
             button.textContent = category;
             button.classList.add("category-button");
             button.onclick = () => selectCategory(category);
-            document.getElementById("categories").appendChild(button);
+            categoriesDiv.appendChild(button);
         });
     </script>
 </body>
 </html>
+
