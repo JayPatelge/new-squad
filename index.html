@@ -23,12 +23,12 @@
     <div id="category-options"></div>
     <div id="text" style="font-size: 50px;"></div>
     <button id="submit-button" class="large-button" style="display: none;">Submit</button>
-    
+    <audio id="notification-sound" src="/static/John-Cena-My-Time-Is-Now-(TrendyBeatz.com).mp3" type="audio/mpeg"></audio>
+
     <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-database-compat.js"></script>
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBRcBDEymGmFu4RuC7NQyhidLspv7rNb8Q",
             authDomain: "new-squad.firebaseapp.com",
@@ -45,37 +45,48 @@
 
         const submitButton = document.getElementById("submit-button");
         const categoryOptions = document.getElementById("category-options");
+        const notificationSound = document.getElementById('notification-sound');
+        const taskImage = document.getElementById("task-image");
+        const textElement = document.getElementById("text");
 
         let selectedCategory = null;
+
+        // Function to create a category button
+        function createButton(category) {
+            const button = document.createElement('button');
+            button.textContent = category;
+            button.className = 'large-button';
+            button.onclick = () => selectCategory(category);
+            return button;
+        }
 
         // Listen for new tasks
         db.ref("tasks/current").on("value", (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 // Update image and text
-                document.getElementById("task-image").src = data.image_url || '';
-                document.getElementById("text").textContent = data.text || 'No text available.';
+                taskImage.src = data.image_url || '';
+                taskImage.style.display = "block";
+                textElement.textContent = data.text || 'No text available.';
                 categoryOptions.innerHTML = ''; // Clear previous category buttons
-                submitButton.style.display = "none"; // Reset submit button
-                submitButton.disabled = true; // Ensure the button is disabled initially
                 selectedCategory = null;
+                submitButton.style.display = "none"; // Reset submit button
+                submitButton.disabled = true;
 
                 // Populate category buttons
                 const categories = ["Option A", "Option B", "Option C"];
                 categories.forEach((category) => {
-                    const button = document.createElement("button");
-                    button.textContent = category;
-                    button.className = 'large-button';
-                    button.onclick = () => selectCategory(category);
-                    categoryOptions.appendChild(button);
+                    categoryOptions.appendChild(createButton(category));
                 });
+
+                playNotificationSound(); // Try playing sound
             } else {
-                // Clear UI for waiting state
-                document.getElementById("task-image").src = ''; // Clear image
-                document.getElementById("text").textContent = 'Waiting for task...';
-                categoryOptions.innerHTML = ''; // Clear categories
-                submitButton.style.display = "none"; // Reset submit button
-                submitButton.disabled = true; // Ensure the button is disabled
+                // Waiting for task
+                taskImage.style.display = 'none';
+                textElement.textContent = 'Waiting for task...';
+                categoryOptions.innerHTML = '';
+                submitButton.style.display = 'none';
+                submitButton.disabled = true;
             }
         });
 
@@ -85,14 +96,12 @@
             document.querySelectorAll("#category-options button").forEach((btn) => {
                 btn.style.backgroundColor = ""; // Reset button color
             });
-            const selectedButton = Array.from(document.querySelectorAll("#category-options button")).find(
+            const selectedButton = document.querySelectorAll("#category-options button").find(
                 btn => btn.textContent === category
             );
-            if (selectedButton) {
-                selectedButton.style.backgroundColor = "brown"; // Highlight selected button
-            }
+            if (selectedButton) selectedButton.style.backgroundColor = "brown"; // Highlight selected button
             submitButton.style.display = "block"; // Show submit button
-            submitButton.disabled = false; // Enable the submit button
+            submitButton.disabled = false; // Enable submit button
         }
 
         // Submit selected category
@@ -105,14 +114,12 @@
                 })
                     .then(() => {
                         console.log(`Category "${selectedCategory}" submitted!`);
-                        document.getElementById("text").textContent = 'Waiting for task...';
-                        submitButton.style.display = "none"; // Hide submit button after submission
-                        submitButton.disabled = true; // Disable the button again
-                        selectedCategory = null; // Reset selection
+                        categoryOptions.innerHTML = ''; // Clear buttons after submission
+                        textElement.textContent = 'Waiting for task...';
+                        submitButton.style.display = "none"; // Hide submit button
+                        submitButton.disabled = true; // Disable submit button
                     })
                     .catch(error => console.error("Error submitting category:", error));
-            } else {
-                console.warn("No category selected.");
             }
         };
     </script>
