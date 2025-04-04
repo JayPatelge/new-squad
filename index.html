@@ -22,8 +22,7 @@
     <img id="task-image" src="" alt="Image not available" style="max-width: 100%; height: auto;">
     <div id="category-options"></div>
     <div id="text" style="font-size: 50px;"></div>
-    <div id="text-category-options"></div>
-    <button id="submitbutton" disabled class="large-button">Submit</button>
+    <button id="submit-button" disabled class="large-button">Submit</button>
     
     <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js"></script>
@@ -45,7 +44,7 @@
         const db = firebase.database();
 
         const submitButton = document.getElementById("submit-button");
-        const categoriesDiv = document.getElementById("categories");
+        const categoryOptions = document.getElementById("category-options");
 
         let selectedCategory = null;
 
@@ -53,9 +52,10 @@
         db.ref("tasks/current").on("value", (snapshot) => {
             const data = snapshot.val();
             if (data) {
+                // Update image and text
                 document.getElementById("task-image").src = data.image_url || '';
-                document.getElementById("task-text").textContent = data.text || 'No text available.';
-                categoriesDiv.innerHTML = ''; // Clear categories on new task
+                document.getElementById("text").textContent = data.text || 'No text available.';
+                categoryOptions.innerHTML = ''; // Clear previous category buttons
                 submitButton.style.display = "none"; // Reset submit button
                 selectedCategory = null;
 
@@ -64,13 +64,15 @@
                 categories.forEach((category) => {
                     const button = document.createElement("button");
                     button.textContent = category;
+                    button.className = 'large-button';
                     button.onclick = () => selectCategory(category);
-                    categoriesDiv.appendChild(button);
+                    categoryOptions.appendChild(button);
                 });
             } else {
+                // Clear UI for waiting state
                 document.getElementById("task-image").src = ''; // Clear image
-                document.getElementById("task-text").textContent = 'Waiting for task...';
-                categoriesDiv.innerHTML = ''; // Clear categories
+                document.getElementById("text").textContent = 'Waiting for task...';
+                categoryOptions.innerHTML = ''; // Clear categories
                 submitButton.style.display = "none"; // Reset submit button
             }
         });
@@ -78,17 +80,17 @@
         // Change button color on selection
         function selectCategory(category) {
             selectedCategory = category;
-            document.querySelectorAll("#categories button").forEach((btn) => {
+            document.querySelectorAll("#category-options button").forEach((btn) => {
                 btn.style.backgroundColor = ""; // Reset button color
             });
-            const selectedButton = Array.from(document.querySelectorAll("#categories button")).find(
+            const selectedButton = Array.from(document.querySelectorAll("#category-options button")).find(
                 btn => btn.textContent === category
             );
             if (selectedButton) selectedButton.style.backgroundColor = "brown"; // Highlight selected button
             submitButton.style.display = "block"; // Show submit button
         }
 
-        // Submit category
+        // Submit selected category
         submitButton.onclick = () => {
             if (selectedCategory) {
                 db.ref("tasks/current").update({
@@ -98,7 +100,7 @@
                 })
                     .then(() => {
                         console.log(`Category "${selectedCategory}" submitted!`);
-                        document.getElementById("task-text").textContent = 'Waiting for task...';
+                        document.getElementById("text").textContent = 'Waiting for task...';
                     })
                     .catch(error => console.error("Error submitting category:", error));
             } else {
