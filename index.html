@@ -41,25 +41,38 @@
         let selectedCategory = null;
 
         // Listen for new tasks
-        db.ref("tasks/current").on("value", (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                document.getElementById("task-image").src = data.image_url || '';
-                document.getElementById("task-text").textContent = data.text || 'No text available.';
+       db.ref("tasks/current").on("value", (snapshot) => {
+           const data = snapshot.val();
+           if (data) {
+               document.getElementById("task-image").src = data.image_url || '';
+               document.getElementById("task-text").textContent = data.text || 'No text available.';
+               
+               // Attempt to play sound programmatically
+               alertSound.play().catch((error) => {
+                   console.warn("Sound playback failed, attempting workaround:", error);
+                   
+                   // Workaround: show a visual cue for user interaction to enable sound
+                   const enableSoundButton = document.createElement("button");
+                   enableSoundButton.textContent = "Enable Sound";
+                   enableSoundButton.style = "position: fixed; bottom: 20px; right: 20px; z-index: 1000;";
+                   enableSoundButton.onclick = () => {
+                       alertSound.play().then(() => {
+                           enableSoundButton.remove(); // Remove button after enabling sound
+                       }).catch((err) => console.error("Failed to play sound after user interaction:", err));
+                   };
+                   document.body.appendChild(enableSoundButton);
+               });
 
-                alertSound.play().catch((error) => {
-                    console.error("Sound playback failed:", error);
-                });
+        submitButton.style.display = "none"; // Ensure submit button resets
+        selectedCategory = null; // Reset category selection
+    } else {
+        document.getElementById("task-image").src = '';
+        document.getElementById("task-text").textContent = 'Waiting for new task...';
+        alertSound.pause(); // Stop sound if no task is available
+        alertSound.currentTime = 0; // Reset sound playback position
+    }
+});
 
-                submitButton.style.display = "none"; // Ensure submit button resets
-                selectedCategory = null; // Reset category selection
-            } else {
-                document.getElementById("task-image").src = '';
-                document.getElementById("task-text").textContent = 'Waiting for new task...';
-                alertSound.pause(); // Stop sound if no task is available
-                alertSound.currentTime = 0; // Reset sound playback position
-            }
-        });
 
         function selectCategory(category) {
             selectedCategory = category;
