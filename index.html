@@ -14,15 +14,16 @@
             margin: 20px 0;
             border: 2px solid #ccc;
             border-radius: 10px;
+            display: none; /* Initially hide image */
         }
         .title {
-            font-size: calc(20px + 2vw); /* Dynamically scale font size based on viewport */
+            font-size: calc(20px + 2vw); /* Dynamically scale font size */
             text-align: center;
             margin-top: 20px;
         }
         .large-button {
-            padding: calc(12px + 1vw) calc(40px + 2vw); /* Dynamically scale button size */
-            font-size: calc(16px + 1vw); /* Adjust font size based on viewport */
+            padding: calc(12px + 1vw) calc(40px + 2vw); /* Scale button size */
+            font-size: calc(16px + 1vw); /* Scale font size */
             border-radius: 10px;
             border: 3px solid black;
             background-color: skyblue;
@@ -31,96 +32,78 @@
         .large-button.selected {
             background-color: gray; /* Highlight selected button */
         }
+        #submit-button {
+            display: none; /* Hide submit button initially */
+        }
     </style>
 </head>
 <body>
     <div class="title">Select Option for CARDS</div>
-    <img id="task-image" src="/get_image" alt="Image" style="display:none;">
+    <img id="task-image" alt="Image">
+    <div id="text" class="title" style="font-size: calc(16px + 1vw); margin: 20px 0;">Waiting for task...</div>
     <div id="category-options"></div>
-    <div id="text" style="font-size: calc(16px + 1vw);"></div>
-    <div id="text-category-options"></div>
-    <button id="submit-button" disabled class="large-button" style="display:none;">Submit</button>
+    <button id="submit-button" disabled class="large-button">Submit</button>
     <audio id="notification-sound" src="/static/John-Cena-My-Time-Is-Now-(TrendyBeatz.com).mp3" type="audio/mpeg"></audio>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <script>
         var socket = io();
         var selectedCategory = null;
-        var selectedTextCategory = null;
         var notificationSound = document.getElementById('notification-sound');
 
-        // Create dynamic button
-        function createButton(category, isText) {
+        // Function to create dynamic buttons
+        function createButton(category) {
             var button = document.createElement('button');
             button.textContent = category;
             button.className = 'large-button';
             button.addEventListener('click', () => {
-                var previousButton;
-                if (isText) {
-                    if (selectedTextCategory) {
-                        previousButton = document.querySelector('#text-category-options button[category="' + selectedTextCategory + '"]');
-                        if (previousButton) {
-                            previousButton.classList.remove('selected');
-                        }
-                    }
-                    selectedTextCategory = category;
-                } else {
-                    if (selectedCategory) {
-                        previousButton = document.querySelector('#category-options button[category="' + selectedCategory + '"]');
-                        if (previousButton) {
-                            previousButton.classList.remove('selected');
-                        }
-                    }
-                    selectedCategory = category;
+                // Reset previous selection
+                if (selectedCategory) {
+                    document.querySelector('#category-options button.selected')?.classList.remove('selected');
                 }
+                selectedCategory = category;
                 button.classList.add('selected'); // Highlight selected button
-                if (selectedCategory && selectedTextCategory) {
-                    document.getElementById('submit-button').disabled = false;
-                    document.getElementById('submit-button').style.display = 'block'; // Ensure button is visible
-                }
+                document.getElementById('submit-button').disabled = false;
+                document.getElementById('submit-button').style.display = 'block'; // Show submit button
             });
-            button.setAttribute('category', category);
             return button;
         }
 
-        // Fetch task and update UI dynamically
+        // Fetch task and update UI
         fetch('/get_task')
             .then(response => response.json())
             .then(data => {
                 const taskImage = document.getElementById('task-image');
                 const textElement = document.getElementById('text');
                 const categoryOptions = document.getElementById('category-options');
-                const textCategoryOptions = document.getElementById('text-category-options');
 
                 if (data.has_new_task) {
                     taskImage.style.display = 'block'; // Show image
                     taskImage.src = data.image_path;
                     textElement.textContent = data.text;
 
-                    categoryOptions.innerHTML = '';
-                    textCategoryOptions.innerHTML = '';
+                    categoryOptions.innerHTML = ''; // Clear previous buttons
                     data.categories.forEach(category => {
-                        categoryOptions.appendChild(createButton(category, false));
-                        textCategoryOptions.appendChild(createButton(category, true));
+                        categoryOptions.appendChild(createButton(category));
                     });
+
                     notificationSound.play(); // Play notification sound
                 } else {
                     taskImage.style.display = 'none'; // Hide image
-                    textElement.textContent = 'No new tasks available.';
-                    categoryOptions.innerHTML = 'No new tasks available.';
-                    textCategoryOptions.innerHTML = 'No new tasks available.';
+                    textElement.textContent = 'Waiting for task...';
+                    categoryOptions.innerHTML = ''; // Clear previous buttons
                     document.getElementById('submit-button').style.display = 'none'; // Hide submit button
                 }
             });
 
         // Submit selected category
         document.getElementById('submit-button').addEventListener('click', () => {
-            socket.emit('category_selected', { category: selectedCategory });
-            socket.emit('text_category_selected', { category: selectedTextCategory });
-            selectedCategory = null;
-            selectedTextCategory = null;
-            document.getElementById('submit-button').disabled = true;
-            document.getElementById('submit-button').style.display = 'none'; // Hide submit button
-            socket.emit('stop_server');
+            if (selectedCategory) {
+                socket.emit('category_selected', { category: selectedCategory });
+                selectedCategory = null;
+                document.getElementById('submit-button').disabled = true;
+                document.getElementById('submit-button').style.display = 'none'; // Hide submit button
+                socket.emit('stop_server');
+            }
         });
 
         // Listen for category updates
@@ -131,25 +114,22 @@
                     const taskImage = document.getElementById('task-image');
                     const textElement = document.getElementById('text');
                     const categoryOptions = document.getElementById('category-options');
-                    const textCategoryOptions = document.getElementById('text-category-options');
 
                     if (data.has_new_task) {
                         taskImage.style.display = 'block'; // Show image
                         taskImage.src = data.image_path;
                         textElement.textContent = data.text;
 
-                        categoryOptions.innerHTML = '';
-                        textCategoryOptions.innerHTML = '';
+                        categoryOptions.innerHTML = ''; // Clear previous buttons
                         data.categories.forEach(category => {
-                            categoryOptions.appendChild(createButton(category, false));
-                            textCategoryOptions.appendChild(createButton(category, true));
+                            categoryOptions.appendChild(createButton(category));
                         });
+
                         notificationSound.play(); // Play notification sound
                     } else {
                         taskImage.style.display = 'none'; // Hide image
-                        textElement.textContent = 'No new tasks available.';
-                        categoryOptions.innerHTML = 'No new tasks available.';
-                        textCategoryOptions.innerHTML = 'No new tasks available.';
+                        textElement.textContent = 'Waiting for task...';
+                        categoryOptions.innerHTML = ''; // Clear previous buttons
                     }
                 });
         });
