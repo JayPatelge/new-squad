@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        img { max-width: 90%; height: auto; margin: 10px 0; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Task Viewer</h1>
+    <img id="task-image" src="" alt="Image">
+    <p id="task-text"></p>
+    <audio id="alert-sound" src="https://your-domain.com/loud_alert.mp3" loop preload="auto"></audio>
+    <div id="categories"></div>
+    <button id="submit-button" style="display:none;">Submit</button>
+    <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBRcBDEymGmFu4RuC7NQyhidLspv7rNb8Q",
+            authDomain: "new-squad.firebaseapp.com",
+            databaseURL: "https://new-squad-default-rtdb.firebaseio.com",
+            projectId: "new-squad",
+            storageBucket: "new-squad.firebasestorage.app",
+            messagingSenderId: "513952061303",
+            appId: "1:513952061303:web:6af85a5a26ae17bc527372"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const alertSound = document.getElementById("alert-sound");
+        const submitButton = document.getElementById("submit-button");
+
+        let selectedCategory = null;
+
+        // Listen for new tasks
+        db.ref("tasks/current").on("value", (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById("task-image").src = data.image_url || '';
+                document.getElementById("task-text").textContent = data.text || 'No text available.';
+                alertSound.play(); // Start sound alert
+                submitButton.style.display = "none"; // Ensure submit button resets
+                selectedCategory = null; // Reset category selection
+            } else {
+                document.getElementById("task-image").src = '';
+                document.getElementById("task-text").textContent = 'Waiting for new task...';
+                alertSound.pause(); // Stop sound if no task is available
+                alertSound.currentTime = 0; // Reset sound playback position
+            }
+        });
+
+        function selectCategory(category) {
+            selectedCategory = category;
+            submitButton.style.display = "block"; // Show submit button
+        }
+
+        submitButton.onclick = () => {
+            if (selectedCategory) {
+                db.ref("tasks/current/category").set(selectedCategory)
+                    .then(() => {
+                        alertSound.pause(); // Stop sound alert
+                        alertSound.currentTime = 0; // Reset sound playback position
+                        db.ref("tasks/current").remove(); // Delete task data
+                        alert(`Category "${selectedCategory}" submitted!`);
+                        submitButton.style.display = "none"; // Hide submit button
+                    });
+            } else {
+                alert("Please select a category before submitting.");
+            }
+        };
+
+        // Add category buttons
+        const categories = ["Option A", "Option B", "Option C"];
+        categories.forEach((category) => {
+            const button = document.createElement("button");
+            button.textContent = category;
+            button.onclick = () => selectCategory(category);
+            document.getElementById("categories").appendChild(button);
+        });
+    </script>
+</body>
+</html>
