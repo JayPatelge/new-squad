@@ -46,13 +46,17 @@
     <audio id="notification-sound" src="/static/John-Cena-My-Time-Is-Now-(TrendyBeatz.com).mp3" type="audio/mpeg"></audio>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <script>
-        var socket = io();
-        var selectedCategory = null;
-        var notificationSound = document.getElementById('notification-sound');
+        const socket = io();
+        let selectedCategory = null;
+        const notificationSound = document.getElementById('notification-sound');
+        const taskImage = document.getElementById('task-image');
+        const textElement = document.getElementById('text');
+        const categoryOptions = document.getElementById('category-options');
+        const submitButton = document.getElementById('submit-button');
 
         // Function to create dynamic buttons
         function createButton(category) {
-            var button = document.createElement('button');
+            const button = document.createElement('button');
             button.textContent = category;
             button.className = 'large-button';
             button.addEventListener('click', () => {
@@ -62,58 +66,18 @@
                 }
                 selectedCategory = category;
                 button.classList.add('selected'); // Highlight selected button
-                document.getElementById('submit-button').disabled = false;
-                document.getElementById('submit-button').style.display = 'block'; // Show submit button
+                submitButton.disabled = false;
+                submitButton.style.display = 'block'; // Show submit button
             });
             return button;
         }
 
         // Fetch task and update UI
-        fetch('/get_task')
-            .then(response => response.json())
-            .then(data => {
-                const taskImage = document.getElementById('task-image');
-                const textElement = document.getElementById('text');
-                const categoryOptions = document.getElementById('category-options');
-
-                if (data.has_new_task) {
-                    taskImage.style.display = 'block'; // Show image
-                    taskImage.src = data.image_path;
-                    textElement.textContent = data.text;
-
-                    categoryOptions.innerHTML = ''; // Clear previous buttons
-                    data.categories.forEach(category => {
-                        categoryOptions.appendChild(createButton(category));
-                    });
-
-                    notificationSound.play(); // Play notification sound
-                } else {
-                    taskImage.style.display = 'none'; // Hide image
-                    textElement.textContent = 'Waiting for task...';
-                    categoryOptions.innerHTML = ''; // Clear previous buttons
-                    document.getElementById('submit-button').style.display = 'none'; // Hide submit button
-                }
-            });
-
-        // Submit selected category
-        document.getElementById('submit-button').addEventListener('click', () => {
-            if (selectedCategory) {
-                socket.emit('category_selected', { category: selectedCategory });
-                selectedCategory = null;
-                document.getElementById('submit-button').disabled = true;
-                document.getElementById('submit-button').style.display = 'none'; // Hide submit button
-                socket.emit('stop_server');
-            }
-        });
-
-        // Listen for category updates
-        socket.on('category_updated', () => {
+        function fetchTask() {
             fetch('/get_task')
                 .then(response => response.json())
                 .then(data => {
-                    const taskImage = document.getElementById('task-image');
-                    const textElement = document.getElementById('text');
-                    const categoryOptions = document.getElementById('category-options');
+                    console.log('Task Data:', data); // Debugging output
 
                     if (data.has_new_task) {
                         taskImage.style.display = 'block'; // Show image
@@ -130,9 +94,32 @@
                         taskImage.style.display = 'none'; // Hide image
                         textElement.textContent = 'Waiting for task...';
                         categoryOptions.innerHTML = ''; // Clear previous buttons
+                        submitButton.style.display = 'none'; // Hide submit button
                     }
+                })
+                .catch(error => {
+                    console.error('Error fetching task:', error);
                 });
+        }
+
+        // Submit selected category
+        submitButton.addEventListener('click', () => {
+            if (selectedCategory) {
+                socket.emit('category_selected', { category: selectedCategory });
+                selectedCategory = null;
+                submitButton.disabled = true;
+                submitButton.style.display = 'none'; // Hide submit button
+                socket.emit('stop_server');
+            }
         });
+
+        // Listen for category updates
+        socket.on('category_updated', () => {
+            fetchTask(); // Refresh UI on updates
+        });
+
+        // Initial fetch
+        fetchTask();
     </script>
 </body>
 </html>
