@@ -42,7 +42,7 @@
 <body>
     <h1 id="title" style="display:none;">Select Option For Cards</h1>
     <img id="task-image" src="" alt="" style="display:none;">
-    <p id="task-text" style="display:none;"></p>
+    <p id="task-text" style="display:none;">Waiting for task...</p>
     <audio id="alert-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" loop preload="auto"></audio>
     <div id="categories" style="display:none;"></div>
     <button id="submit-button" style="display:none;">Submit</button>
@@ -83,11 +83,15 @@
                 document.getElementById("task-text").textContent = data.text;
                 categoriesDiv.style.display = "block";
 
+                // Reset category buttons to default blue color
+                document.querySelectorAll(".category-button").forEach((btn) => {
+                    btn.classList.remove("selected");
+                });
+
                 // Attempt to play sound programmatically
                 alertSound.play().catch((error) => {
                     console.warn("Sound playback failed, attempting workaround:", error);
 
-                    // Workaround: show a visual cue for user interaction to enable sound
                     const enableSoundButton = document.createElement("button");
                     enableSoundButton.id = "enable-sound-button";
                     enableSoundButton.textContent = "Enable Sound";
@@ -102,9 +106,11 @@
                 submitButton.style.display = "none"; // Ensure submit button resets
                 selectedCategory = null; // Reset category selection
             } else {
+                // No task available: Show waiting message
                 document.getElementById("title").style.display = "none";
                 document.getElementById("task-image").style.display = "none";
-                document.getElementById("task-text").style.display = "none";
+                document.getElementById("task-text").style.display = "block"; // Show waiting message
+                document.getElementById("task-text").textContent = 'Waiting for task...';
                 categoriesDiv.style.display = "none";
                 alertSound.pause(); // Stop sound if no task is available
                 alertSound.currentTime = 0; // Reset sound playback position
@@ -131,11 +137,14 @@
         // Ensure the category is submitted
         submitButton.onclick = () => {
             if (selectedCategory) {
-                db.ref("tasks/current/category").set(selectedCategory)
+                db.ref("tasks/current").update({
+                    category: selectedCategory,
+                    image_url: null,
+                    text: null
+                })
                     .then(() => {
                         alertSound.pause(); // Stop sound
                         alertSound.currentTime = 0; // Reset sound
-                        db.ref("tasks/current").remove(); // Delete task data
                         alert(`Category "${selectedCategory}" submitted!`);
                         submitButton.style.display = "none"; // Hide submit button
                     })
@@ -159,4 +168,3 @@
     </script>
 </body>
 </html>
-
