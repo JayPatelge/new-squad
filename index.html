@@ -23,8 +23,7 @@
     <div id="category-options"></div>
     <div id="text" style="font-size: 50px;"></div>
     <button id="submit-button" class="large-button" style="display: none;">Submit</button>
-    <audio id="notification-sound" src="/static/John-Cena-My-Time-Is-Now-(TrendyBeatz.com).mp3" type="audio/mpeg"></audio>
-
+    
     <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-database-compat.js"></script>
@@ -45,7 +44,7 @@
 
         const submitButton = document.getElementById("submit-button");
         const categoryOptions = document.getElementById("category-options");
-        const notificationSound = document.getElementById('notification-sound');
+        const notificationSound = new Audio("https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533");
         const taskImage = document.getElementById("task-image");
         const textElement = document.getElementById("text");
 
@@ -58,6 +57,27 @@
             button.className = 'large-button';
             button.onclick = () => selectCategory(category);
             return button;
+        }
+
+        // Function to play notification sound
+        function playNotificationSound() {
+            notificationSound.play().catch((error) => {
+                console.warn("Sound autoplay blocked. Showing enable sound button.", error);
+                showEnableAudioButton(); // Show enable sound button if autoplay fails
+            });
+        }
+
+        // Function to show "Enable Sound" button
+        function showEnableAudioButton() {
+            const enableSoundButton = document.createElement("button");
+            enableSoundButton.textContent = "Enable Sound";
+            enableSoundButton.style = "position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 10px 20px; font-size: 16px; border-radius: 5px; background-color: gray; color: white; border: none; cursor: pointer;";
+            enableSoundButton.onclick = () => {
+                notificationSound.play().then(() => {
+                    enableSoundButton.remove(); // Remove button after enabling sound
+                }).catch(err => console.error("Failed to play sound after user interaction:", err));
+            };
+            document.body.appendChild(enableSoundButton);
         }
 
         // Listen for new tasks
