@@ -3,24 +3,71 @@
 <head>
     <title>Select Option For Cards</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-        img { max-width: 90%; height: auto; margin: 10px 0; }
-        button { margin: 10px; padding: 10px 20px; font-size: 16px; border-radius: 5px; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            font-size: calc(1em + 0.5vw);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        img {
+            max-width: 80%;
+            height: auto;
+            margin: 20px 0;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+        p {
+            font-size: calc(1em + 0.4vw);
+            margin: 10px 0;
+        }
+        button.category-button {
+            background-color: blue;
+            color: white;
+            margin: 10px;
+            padding: 1em 2em;
+            font-size: calc(1em + 0.3vw);
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        button.category-button.selected {
+            background-color: brown;
+        }
+        div#categories {
+            max-height: 50vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+        button#submit-button {
+            background-color: green;
+            color: white;
+            font-size: calc(1em + 0.5vw);
+            padding: 1em 2em;
+            border-radius: 10px;
+            cursor: pointer;
+            border: none;
+        }
+        button#submit-button:hover {
+            background-color: darkgreen;
+        }
     </style>
 </head>
 <body>
-    <h1>Select Option For Cards</h1>
+    <h1 id="title">Select Option For Cards</h1>
     <img id="task-image" src="" alt="Image not available">
     <p id="task-text"></p>
-    <audio id="alert-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" loop preload="auto"></audio>
-    <div id="categories"></div>
+    <div id="categories" style="display:none;"></div>
     <button id="submit-button" style="display:none;">Submit</button>
-    
-    <!-- Use the compatibility Firebase libraries -->
+    <button id="refresh-button" style="display:none;">Refresh</button>
+
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-database-compat.js"></script>
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBRcBDEymGmFu4RuC7NQyhidLspv7rNb8Q",
             authDomain: "new-squad.firebaseapp.com",
@@ -31,80 +78,80 @@
             appId: "1:513952061303:web:6af85a5a26ae17bc527372"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const alertSound = document.getElementById("alert-sound");
         const submitButton = document.getElementById("submit-button");
-
+        const categoriesDiv = document.getElementById("categories");
+        const alertSound = new Audio("https://firebasestorage.googleapis.com/v0/b/new-squad.appspot.com/o/loud_alert.mp3?alt=media");
         let selectedCategory = null;
 
-        // Listen for new tasks
-       db.ref("tasks/current").on("value", (snapshot) => {
-           const data = snapshot.val();
-           if (data) {
-               document.getElementById("task-image").src = data.image_url || '';
-               document.getElementById("task-text").textContent = data.text || 'No text available.';
-               
-               // Attempt to play sound programmatically
-               alertSound.play().catch((error) => {
-                   console.warn("Sound playback failed, attempting workaround:", error);
-                   
-                   // Workaround: show a visual cue for user interaction to enable sound
-                   const enableSoundButton = document.createElement("button");
-                   enableSoundButton.textContent = "Enable Sound";
-                   enableSoundButton.style = "position: fixed; bottom: 20px; right: 20px; z-index: 1000;";
-                   enableSoundButton.onclick = () => {
-                       alertSound.play().then(() => {
-                           enableSoundButton.remove(); // Remove button after enabling sound
-                       }).catch((err) => console.error("Failed to play sound after user interaction:", err));
-                   };
-                   document.body.appendChild(enableSoundButton);
-               });
+        // Task Listener
+        db.ref("tasks/current").on("value", (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.image_url && data.text) {
+                document.getElementById("title").style.display = "block";
+                document.getElementById("task-image").src = data.image_url;
+                document.getElementById("task-text").textContent = data.text;
+                categoriesDiv.style.display = "block";
+                submitButton.style.display = "none";
+                document.getElementById("refresh-button").style.display = "none";
 
-        submitButton.style.display = "none"; // Ensure submit button resets
-        selectedCategory = null; // Reset category selection
-    } else {
-        document.getElementById("task-image").src = '';
-        document.getElementById("task-text").textContent = 'Waiting for new task...';
-        alertSound.pause(); // Stop sound if no task is available
-        alertSound.currentTime = 0; // Reset sound playback position
-    }
-});
-        function selectCategory(category) {
-            selectedCategory = category;
-            submitButton.style.display = "block"; // Show submit button
-        }
-        
-        // Ensure the category is submitted
-        submitButton.onclick = () => {
-            if (selectedCategory) {
-                db.ref("tasks/current/category").set(selectedCategory)
-                    .then(() => {
-                        alertSound.pause(); // Stop sound
-                        alertSound.currentTime = 0; // Reset sound
-                        db.ref("tasks/current").remove(); // Delete task data
-                        alert(`Category "${selectedCategory}" submitted!`);
-                        submitButton.style.display = "none"; // Hide submit button
-                    })
-                    .catch((error) => {
-                        console.error("Error submitting category:", error);
-                    });
+                // Play sound when new task detected
+                alertSound.play().catch((error) => {
+                    console.warn("Sound autoplay blocked:", error);
+                });
             } else {
-                alert("Please select a category before submitting.");
+                document.getElementById("title").style.display = "none";
+                document.getElementById("task-image").style.display = "none";
+                document.getElementById("task-text").textContent = 'Waiting for a new task...';
+                categoriesDiv.style.display = "none";
+                submitButton.style.display = "none";
+                document.getElementById("refresh-button").style.display = "block";
             }
-        };
-        
-        // Add category buttons dynamically
+        });
+
+        // Add Category Buttons
         const categories = ["Option A", "Option B", "Option C"];
         categories.forEach((category) => {
             const button = document.createElement("button");
             button.textContent = category;
-            button.onclick = () => selectCategory(category);
-            document.getElementById("categories").appendChild(button);
+            button.classList.add("category-button");
+
+            button.onclick = () => {
+                document.querySelectorAll(".category-button").forEach((btn) => {
+                    btn.classList.remove("selected");
+                });
+                button.classList.add("selected");
+                selectedCategory = category;
+                submitButton.style.display = "block";
+            };
+
+            categoriesDiv.appendChild(button);
         });
 
+        // Refresh Button Logic
+        document.getElementById("refresh-button").onclick = () => {
+            location.reload();
+        };
+
+        // Submit Button Logic
+        submitButton.onclick = () => {
+            if (selectedCategory) {
+                db.ref("tasks/current").update({
+                    category: selectedCategory,
+                    image_url: null,
+                    text: null
+                })
+                .then(() => {
+                    alert(`Category "${selectedCategory}" submitted!`);
+                    submitButton.style.display = "none";
+                })
+                .catch((error) => console.error("Error submitting category:", error));
+            } else {
+                alert("Please select a category before submitting.");
+            }
+        };
     </script>
 </body>
 </html>
