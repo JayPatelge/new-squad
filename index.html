@@ -12,8 +12,9 @@
     <h1>Select Option For Cards</h1>
     <img id="task-image" src="" alt="Image not available">
     <p id="task-text"></p>
-    <audio id="alert-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" loop preload="auto"></audio>
+    <audio id="alert-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.appspot.com/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" loop preload="auto"></audio>
     <div id="categories"></div>
+    <button id="play-sound-button">Play Sound</button>
     <button id="submit-button" style="display:none;">Submit</button>
     
     <!-- Use the compatibility Firebase libraries -->
@@ -36,16 +37,17 @@
         const db = firebase.database();
 
         const alertSound = document.getElementById("alert-sound");
-        const submitButton = document.getElementById("submit-button");
+        const playSoundButton = document.getElementById("play-sound-button");
 
-        let selectedCategory = null;
-
-        // Enable sound playback after user interaction
-        document.body.addEventListener("click", () => {
+        // Enable sound playback with button click
+        playSoundButton.onclick = () => {
             alertSound.play().catch((error) => {
                 console.error("Sound playback failed:", error);
             });
-        });
+        };
+
+        const submitButton = document.getElementById("submit-button");
+        let selectedCategory = null;
 
         // Listen for new tasks
         db.ref("tasks/current").on("value", (snapshot) => {
@@ -53,7 +55,6 @@
             if (data) {
                 document.getElementById("task-image").src = data.image_url || '';
                 document.getElementById("task-text").textContent = data.text || 'No text available.';
-                alertSound.play(); // Start sound alert
                 submitButton.style.display = "none"; // Ensure submit button resets
                 selectedCategory = null; // Reset category selection
             } else {
