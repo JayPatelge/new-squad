@@ -20,10 +20,10 @@
 <body>
     <div class="title">Select Option for CARDS</div>
     <img id="task-image" src="" alt="Image not available" style="max-width: 100%; height: auto;">
-    <div id="category-options"></div>
     <div id="text" style="font-size: 50px;"></div>
+    <div id="category-options"></div> <!-- Category buttons are now below text -->
     <button id="submit-button" class="large-button" style="display: none;">Submit</button>
-    <audio id="notification-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" type="audio/mpeg"></audio>
+    <audio id="notification-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" loop></audio>
 
     <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js"></script>
@@ -48,6 +48,8 @@
         const notificationSound = new Audio("https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533");
         const taskImage = document.getElementById("task-image");
         const textElement = document.getElementById("text");
+
+        notificationSound.loop = true; // Loop the audio continuously
 
         let selectedCategory = null;
 
@@ -138,8 +140,11 @@
                         console.log(`Category "${selectedCategory}" submitted!`);
                         categoryOptions.innerHTML = ''; // Clear buttons after submission
                         textElement.textContent = 'Waiting for task...';
+                        taskImage.style.display = "none"; // Hide image after submission
                         submitButton.style.display = "none"; // Hide submit button
                         submitButton.disabled = true; // Disable submit button
+                        notificationSound.pause(); // Stop audio playback
+                        notificationSound.currentTime = 0; // Reset audio
                     })
                     .catch(error => console.error("Error submitting category:", error));
             }
