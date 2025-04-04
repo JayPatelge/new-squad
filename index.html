@@ -19,9 +19,9 @@
 </head>
 <body>
     <div class="title">Select Option for CARDS</div>
-    <img id="task-image" src="" alt="Image not available" style="max-width: 100%; height: auto;">
+    <img id="task-image" src="" alt="Image not available" style="max-width: 100%; height: auto; display: none;">
     <div id="text" style="font-size: 50px;"></div>
-    <div id="category-options"></div> <!-- Category buttons are now below text -->
+    <div id="category-options" style="display: none;"></div> <!-- Initially hidden -->
     <button id="submit-button" class="large-button" style="display: none;">Submit</button>
     <audio id="notification-sound" src="https://firebasestorage.googleapis.com/v0/b/new-squad.firebasestorage.app/o/loud_alert.mp3?alt=media&token=518e0960-38f9-4355-8047-42d169d60533" loop></audio>
 
@@ -50,7 +50,7 @@
         const textElement = document.getElementById("text");
 
         notificationSound.loop = true; // Loop the audio continuously
-
+        let taskAvailable = false; // Track task availability
         let selectedCategory = null;
 
         // Function to create a category button
@@ -62,12 +62,14 @@
             return button;
         }
 
-        // Function to play notification sound
+        // Function to play notification sound if task exists
         function playNotificationSound() {
-            notificationSound.play().catch((error) => {
-                console.warn("Sound autoplay blocked. Showing enable sound button.", error);
-                showEnableAudioButton(); // Show enable sound button if autoplay fails
-            });
+            if (taskAvailable) {
+                notificationSound.play().catch((error) => {
+                    console.warn("Sound autoplay blocked. Showing enable sound button.", error);
+                    showEnableAudioButton(); // Show enable sound button if autoplay fails
+                });
+            }
         }
 
         // Function to show "Enable Sound" button
@@ -75,11 +77,15 @@
             const enableSoundButton = document.createElement("button");
             enableSoundButton.textContent = "Enable Sound";
             enableSoundButton.style = "position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 24px 150px; font-size: 40px; border-radius: 10px; border: 5px solid black; background-color: skyblue; color: white; cursor: pointer;";
-            enableSoundButton.className = 'large-button'; // Apply same styling as category buttons
+            enableSoundButton.className = 'large-button'; // Match category button styling
             enableSoundButton.onclick = () => {
-                notificationSound.play().then(() => {
-                    enableSoundButton.remove(); // Remove button after enabling sound
-                }).catch(err => console.error("Failed to play sound after user interaction:", err));
+                if (taskAvailable) {
+                    notificationSound.play().then(() => {
+                        enableSoundButton.remove(); // Remove button after enabling sound
+                    }).catch(err => console.error("Failed to play sound after user interaction:", err));
+                } else {
+                    console.log("No task available. Sound cannot be played.");
+                }
             };
             document.body.appendChild(enableSoundButton);
         }
@@ -87,28 +93,29 @@
         // Listen for new tasks
         db.ref("tasks/current").on("value", (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                // Update image and text
-                taskImage.src = data.image_url || '';
+            if (data && data.image_url && data.text) {
+                taskAvailable = true; // Task is available
+                taskImage.src = data.image_url;
                 taskImage.style.display = "block";
-                textElement.textContent = data.text || 'No text available.';
-                categoryOptions.innerHTML = ''; // Clear previous category buttons
+                textElement.textContent = data.text;
+                categoryOptions.style.display = "block"; // Show category buttons
+                categoryOptions.innerHTML = ''; // Clear previous buttons
                 selectedCategory = null;
                 submitButton.style.display = "none"; // Reset submit button
                 submitButton.disabled = true;
 
                 // Populate category buttons
-                const categories = ["Option_A", "Option_B", "Option_C", "Option_D"];
+                const categories = ["Option A", "Option B", "Option C"];
                 categories.forEach((category) => {
                     categoryOptions.appendChild(createButton(category));
                 });
 
                 playNotificationSound(); // Try playing sound
             } else {
-                // Waiting for task
+                taskAvailable = false; // No task available
                 taskImage.style.display = 'none';
                 textElement.textContent = 'Waiting for task...';
-                categoryOptions.innerHTML = '';
+                categoryOptions.style.display = "none"; // Hide category buttons
                 submitButton.style.display = 'none';
                 submitButton.disabled = true;
             }
