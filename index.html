@@ -72,13 +72,12 @@
         alertSound.currentTime = 0; // Reset sound playback position
     }
 });
-
-
         function selectCategory(category) {
             selectedCategory = category;
             submitButton.style.display = "block"; // Show submit button
         }
-
+        
+        // Ensure the category is submitted
         submitButton.onclick = () => {
             if (selectedCategory) {
                 db.ref("tasks/current/category").set(selectedCategory)
@@ -88,13 +87,16 @@
                         db.ref("tasks/current").remove(); // Delete task data
                         alert(`Category "${selectedCategory}" submitted!`);
                         submitButton.style.display = "none"; // Hide submit button
+                    })
+                    .catch((error) => {
+                        console.error("Error submitting category:", error);
                     });
             } else {
                 alert("Please select a category before submitting.");
             }
         };
-
-        // Add category buttons
+        
+        // Add category buttons dynamically
         const categories = ["Option A", "Option B", "Option C"];
         categories.forEach((category) => {
             const button = document.createElement("button");
@@ -102,6 +104,7 @@
             button.onclick = () => selectCategory(category);
             document.getElementById("categories").appendChild(button);
         });
+
     </script>
 </body>
 </html>
