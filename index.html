@@ -40,6 +40,13 @@
 
         let selectedCategory = null;
 
+        // Enable sound playback after user interaction
+        document.body.addEventListener("click", () => {
+            alertSound.play().catch((error) => {
+                console.error("Sound playback failed:", error);
+            });
+        });
+
         // Listen for new tasks
         db.ref("tasks/current").on("value", (snapshot) => {
             const data = snapshot.val();
