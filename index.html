@@ -8,23 +8,34 @@
             text-align: center;
             margin: 20px;
             font-size: calc(1em + 0.5vw); /* Dynamic font size */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh; /* Full height */
         }
         img {
-            max-width: 90%;
+            max-width: 80%;
             height: auto;
+            margin: 20px 0;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+        p {
+            font-size: calc(1em + 0.4vw); /* Responsive text */
             margin: 10px 0;
         }
-        button {
+        button.category-button {
+            background-color: blue; /* Default color */
+            color: white;
             margin: 10px;
             padding: 1em 2em; /* Scaled padding */
             font-size: calc(1em + 0.3vw); /* Responsive button font size */
             border-radius: 5px;
-            background-color: blue; /* Default color */
-            color: white;
             border: none;
             cursor: pointer;
         }
-        button.selected {
+        button.category-button.selected {
             background-color: brown; /* Highlight selected button */
         }
     </style>
@@ -65,14 +76,16 @@
             const data = snapshot.val();
 
             if (data) {
+                document.getElementById("title").style.display = "block";
                 document.getElementById("task-image").src = data.image_url || '';
                 document.getElementById("task-text").textContent = data.text || 'No text available.';
                 categoriesDiv.style.display = "block"; // Show categories
                 submitButton.style.display = "none"; // Reset submit button
                 document.getElementById("refresh-button").style.display = "none"; // Hide refresh button
             } else {
-                document.getElementById("task-image").src = '';
-                document.getElementById("task-text").textContent = 'Waiting for a new task...';
+                document.getElementById("title").style.display = "none"; // Hide title
+                document.getElementById("task-image").src = ''; // Clear image
+                document.getElementById("task-text").textContent = 'Waiting for a new task...'; // Waiting message
                 categoriesDiv.style.display = "none"; // Hide categories
                 document.getElementById("refresh-button").style.display = "block"; // Show refresh button
             }
@@ -83,8 +96,9 @@
         categories.forEach((category) => {
             const button = document.createElement("button");
             button.textContent = category;
+            button.classList.add("category-button");
             button.onclick = () => {
-                document.querySelectorAll("button").forEach((btn) => {
+                document.querySelectorAll(".category-button").forEach((btn) => {
                     btn.classList.remove("selected");
                 });
 
@@ -98,6 +112,20 @@
         // Refresh button functionality
         document.getElementById("refresh-button").onclick = () => {
             location.reload(); // Reload the page
+        };
+
+        // Submit button functionality
+        submitButton.onclick = () => {
+            if (selectedCategory) {
+                db.ref("tasks/current/category").set(selectedCategory)
+                    .then(() => {
+                        alert(`Category "${selectedCategory}" submitted!`);
+                        submitButton.style.display = "none"; // Hide submit button after submission
+                    })
+                    .catch((error) => console.error("Error submitting category:", error));
+            } else {
+                alert("Please select a category before submitting.");
+            }
         };
     </script>
 </body>
