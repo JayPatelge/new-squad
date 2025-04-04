@@ -22,7 +22,7 @@
     <img id="task-image" src="" alt="Image not available" style="max-width: 100%; height: auto;">
     <div id="category-options"></div>
     <div id="text" style="font-size: 50px;"></div>
-    <button id="submit-button" disabled class="large-button">Submit</button>
+    <button id="submit-button" class="large-button" style="display: none;">Submit</button>
     
     <!-- Firebase Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js"></script>
@@ -57,6 +57,7 @@
                 document.getElementById("text").textContent = data.text || 'No text available.';
                 categoryOptions.innerHTML = ''; // Clear previous category buttons
                 submitButton.style.display = "none"; // Reset submit button
+                submitButton.disabled = true; // Ensure the button is disabled initially
                 selectedCategory = null;
 
                 // Populate category buttons
@@ -74,6 +75,7 @@
                 document.getElementById("text").textContent = 'Waiting for task...';
                 categoryOptions.innerHTML = ''; // Clear categories
                 submitButton.style.display = "none"; // Reset submit button
+                submitButton.disabled = true; // Ensure the button is disabled
             }
         });
 
@@ -86,8 +88,11 @@
             const selectedButton = Array.from(document.querySelectorAll("#category-options button")).find(
                 btn => btn.textContent === category
             );
-            if (selectedButton) selectedButton.style.backgroundColor = "brown"; // Highlight selected button
+            if (selectedButton) {
+                selectedButton.style.backgroundColor = "brown"; // Highlight selected button
+            }
             submitButton.style.display = "block"; // Show submit button
+            submitButton.disabled = false; // Enable the submit button
         }
 
         // Submit selected category
@@ -101,6 +106,9 @@
                     .then(() => {
                         console.log(`Category "${selectedCategory}" submitted!`);
                         document.getElementById("text").textContent = 'Waiting for task...';
+                        submitButton.style.display = "none"; // Hide submit button after submission
+                        submitButton.disabled = true; // Disable the button again
+                        selectedCategory = null; // Reset selection
                     })
                     .catch(error => console.error("Error submitting category:", error));
             } else {
